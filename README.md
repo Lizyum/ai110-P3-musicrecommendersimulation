@@ -66,7 +66,23 @@ After all songs are scored, sort descending by total score and return the top `k
 
 ### CLI Output
 
-![Terminal output showing top recommendations](assets/terminal_output.png)
+#### High-Energy Pop
+![Terminal output — High-Energy Pop profile](assets/terminal_output.png)
+
+#### Chill Lofi
+![Terminal output — Chill Lofi profile](assets/ChillLofi.png)
+
+#### Deep Intense Rock
+![Terminal output — Deep Intense Rock profile](assets/IntenseRock.png)
+
+#### Conflicted User (edge case)
+![Terminal output — Conflicted User profile](assets/ConflictedProfile.png)
+
+#### Unknown Genre — Classical (edge case)
+![Terminal output — Unknown Genre profile](assets/UnknownGenre.png)
+
+#### Weight-Shift Experiment
+![Terminal output — experimental weights (energy doubled, genre halved)](assets/ExperimentOutput.png)
 
 ---
 
