@@ -11,23 +11,62 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+Summary of Finished Version Goals:
+...
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify or YouTube learn from massive amounts of behavioral data — what millions of users skip, replay, or share — and combine that with audio features to predict what you'll want next. Our version skips the behavioral data entirely and works purely from content: it compares the properties of each song directly against a user's stated preferences. This makes the logic transparent and easy to reason about, at the cost of personalization depth. The system prioritizes **listening intent** (genre and mood first, then energy level) over fine-grained audio texture, because those two signals most reliably predict whether a song fits a moment.
 
-Some prompts to answer:
+### Song Features
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+Each `Song` object stores:
 
-You can include a simple diagram or bullet list if helpful.
+- `genre` — broad category of sound (e.g. lofi, rock, jazz, ambient)
+- `mood` — emotional tone (e.g. chill, intense, happy, focused)
+- `energy` — float 0.0–1.0, how driving or passive the track feels
+- `valence` — float 0.0–1.0, musical positivity (high = upbeat, low = somber)
+- `danceability` — float 0.0–1.0, rhythmic suitability for movement
+- `acousticness` — float 0.0–1.0, how organic vs. produced the sound is
+- `tempo_bpm` — beats per minute
+
+### UserProfile Features
+
+Each `UserProfile` stores:
+
+- `favorite_genre` — the genre the user most wants to hear
+- `favorite_mood` — the mood the user is in or wants to match
+- `target_energy` — float 0.0–1.0, how energetic the user wants the music
+- `likes_acoustic` — boolean, whether the user prefers acoustic over electronic sounds
+
+### Scoring and Ranking
+
+The `Recommender` scores each song individually using a weighted formula: genre and mood matches award fixed points, while numeric features (energy, acousticness) are scored by proximity — how close the song's value is to the user's target, not simply whether it's high or low. Scores are normalized to [0, 1]. The ranking rule then sorts all songs by score descending and returns the top `k` results.
+
+### Algorithm Recipe
+
+For every song in the catalog, compute a score out of 100 using the following steps:
+
+1. **Genre match** — if `song.genre == user.favorite_genre`, award **+30 pts**
+2. **Mood match** — if `song.mood == user.favorite_mood`, award **+25 pts**
+3. **Energy proximity** — award up to **+20 pts** using `20 * (1 - abs(song.energy - user.target_energy))`
+4. **Valence proximity** — award up to **+15 pts** using `15 * (1 - abs(song.valence - implied_valence))`, where implied valence is derived from the user's mood selection
+5. **Acousticness match** — if `user.likes_acoustic` is `True`, award up to **+10 pts** proportional to `song.acousticness`; if `False`, award up to **+10 pts** proportional to `1 - song.acousticness`
+
+After all songs are scored, sort descending by total score and return the top `k`.
+
+### Potential Biases
+
+- **Genre over-dominance:** With 30 pts locked behind a genre match, two songs that perfectly match a user's mood and energy but differ in genre will always rank below a genre-match with mediocre other scores. Great cross-genre discoveries (e.g., a jazz track that perfectly fits a "focused" study session) may get buried.
+- **Mood label rigidity:** Moods are discrete labels. A song tagged `relaxed` and one tagged `chill` may feel nearly identical to a listener, but this system treats them as completely different — penalizing the `relaxed` song for a user who said `chill`.
+- **Acousticness binary:** `likes_acoustic` is a boolean, which flattens a spectrum into two camps. Users who enjoy a mix of acoustic and produced sounds won't be well-served.
+- **Small catalog amplifies noise:** With only 20 songs, a single scoring decision (like the genre weight) can dominate the entire ranking. Results may feel "locked in" rather than nuanced.
+
+### CLI Output
+
+![Terminal output showing top recommendations](assets/terminal_output.png)
 
 ---
 
